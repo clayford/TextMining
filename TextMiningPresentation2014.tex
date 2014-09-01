@@ -1,0 +1,241 @@
+\documentclass[xcolor=dvipsnames]{beamer} 
+%\definecolor{uvaorange}{RGB}{252, 175, 23}
+%\definecolor{uvablue}{RGB}{0, 85, 150}
+%\usecolortheme[named=uvaorange]{structure} 
+%\usecolortheme[named=Apricot]{structure} 
+%\usetheme{Warsaw} 
+% this defaults to blue
+\usetheme{Berkeley}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{bm}
+\usepackage{lscape}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{graphicx}
+\usetikzlibrary{shapes,arrows}
+\tikzstyle{block} = [rectangle, draw, text width=4em, text centered, minimum height=4em]
+\tikzstyle{cloud} = [draw, ellipse, node distance=2cm, minimum height=2em]
+\tikzstyle{line} = [draw, -latex']
+
+% A Little Math --------------------------------------------------
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+\newcommand{\set}[1]{\left\{#1\right\}}
+\newcommand{\bhat}{\boldsymbol{\hat{\beta}}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\To}{\longrightarrow}
+\newcommand{\X}{\mathbf{X}}
+% Listing shortcuts & details...
+\newcommand{\nin}{\noindent}
+\newcommand{\non}{\nonumber}
+\newcommand{\be}{\begin{enumerate}}
+\newcommand{\ee}{\end{enumerate}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\beq}{\begin{equation}}
+\newcommand{\eeq}{\end{equation}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\+}{\item}
+%% ---------------------------------------------------------------
+
+\begin{document}
+\title[Text Mining in R \hspace{25mm} \insertframenumber/\inserttotalframenumber]{Text Mining in R}
+\author{Clay Ford, StatLab}
+\date{March 5, 2014}
+
+\frame{\titlepage} 
+%--------------------------------
+\section{Introduction}
+%--------------------------------
+\begin{frame}{What is Text Mining?}
+
+My informal definition: programming a computer to read, summarize and make decisions about text. 
+
+Two well-known examples:
+\be
+	\+ spam filter
+	\+ search engine
+\ee
+
+Basic idea: turn text into numbers and apply analytical algorithms. 
+\end{frame}
+
+\begin{frame}{Text Mining steps (usually)}
+
+\be
+	\+ Import text
+	\+ Organize and structure text for access (create a corpus)
+	\+ Transform text into something we can analyze (create a term-document matrix)
+	\+ Do the analysis
+\ee
+
+\end{frame}
+
+\begin{frame}{On the agenda}
+
+Work examples in three practice areas:
+\be
+	\+ classification - classify documents into known categories (supervised learning)
+	\+ concept extraction - determine meaning of text (sentiment analysis)
+	\+ clustering - group similar documents into clusters (unsupervised learning)
+\ee
+
+\end{frame}
+
+\begin{frame}{Why do Text Mining in R?}
+
+Because we can. 
+
+\bi
+	\+ R can manipulate text and files. 
+	\+ R has the statistical functionality for analyses. 
+	\+ Makes sense to leverage our knowledge of R (if you're already an R user).
+\ei
+
+\pause
+
+Should we do text mining in R? 
+
+
+Debatable. Perl and Python are certainly better at the text processing part. Memory issues can be a problem for R. Best for small-to-medium sized projects. \\[\baselineskip]
+
+Not saying R is the ideal platform for text mining, just showing how it can be done.
+
+
+\end{frame}
+
+%--------------------------------
+\section{Terminology}
+%--------------------------------
+
+\begin{frame}{Text Mining Terms}
+
+Good words to know:
+
+\bi
+	\+ Corpus: database for holding text documents
+	\+ Term-Document Matrix: matrix displaying frequencies of words (rows) occuring in documents (columns)
+	\+ Stop Words: common words that do not contribute information
+	\+ Stemming: reduction of words to their simplest forms (roots)
+\ei
+
+\pause
+
+Let's go to R...
+
+\end{frame}
+
+%--------------------------------
+\section{Applications}
+%--------------------------------
+
+
+\begin{frame}{Classification of Tweets}
+
+{\bf Background}: The UVa library collected over 52,000 tweets during the Teresa Sullivan saga. Turns out many of the tweets were not related to the events surrounding Teresa Sullivan. Would like to programmatically classify tweets as relevant or not. 
+
+\pause
+
+{\bf About the text}: Tweets stored as JSON files (JavaScript Object Notation). A way to store and transport text in a structured way.  R has packages for importing JSON files. 
+
+\pause 
+
+{\bf Strategy}: Select a subset of tweets and classify manually. Then use this subset to train a model that will do it for the unclassified tweets. Example of supervised learning. We'll only use 1000 of the tweets.
+
+
+
+\end{frame}
+
+\begin{frame}{Classification of Tweets - cont'd}
+
+{\bf About the analysis}: logistic regression via lasso regularization.
+\pause 
+
+\bi
+	\+ The lasso uses all predictors and regularizes, or shrinks, unimportant coefficients to 0. A form of model selection. Can also accommodate models where $p > n$. 
+	\+ Includes a tuning parameter, $ \lambda $. When $ \lambda  = 0$, lasso gives least squares fit. When $ \lambda $ is sufficiently large, all coefficients are 0. We must select a good value of $ \lambda $. We use cross-validation to help with this. 
+	\+ 10-fold Cross-Validation: split data into 10 sets. Use 9 of the sets to build a model and the remaining set to validate the model. Compare the classifications of the remaining set to its true classifications. Repeat for 9 other sets and find the average misclassification rate. Do this process for multiple values of $ \lambda $ and choose $ \lambda $ that yields lowest misclassification rate. 
+\ei
+\end{frame}
+
+\begin{frame}{Sentiment Analysis of Steve Jobs Article}
+
+{\bf Background}: {\it The New York Times} published a long article on Steve Jobs in Oct 2013. Would like to programmatically review user comments to get a feel for the sentiment expressed. 
+
+\pause 
+
+{\bf About the text}: User comments in JSON format extracted using the New York Times API. 
+
+\pause 
+
+
+{\bf Strategy}: Implement a na\"{\i}ve algorithm for scoring sentiment. Compare words in the comments to two opinion lexicons: one positive and one negative. Count the number of positive and negative matches and take the difference. Score = sum(positive) - sum(negative)
+
+
+
+\end{frame}
+
+\begin{frame}{Clustering of Amazon Reviews}
+
+{\bf Background}: I'm interested in the FitBit activity tracker. It has mostly positive reviews on Amazon but a sizable number of negative reviews. I'd like to know more about the negative reviews. Do they fall into any particular groups? Are there reoccurring reasons for negative reviews?
+
+\pause 
+
+{\bf About the text}: On the Amazon web site. Needs to be "scraped". In other words, copied off web site and cleaned up.
+
+\pause 
+
+{\bf Strategy}: Use a clustering algorithm to place the negative reviews into groups. This is unsupervised learning. I can`t train a model to do this. 
+
+
+\end{frame}
+
+
+\begin{frame}{Clustering of Amazon Reviews - cont'd}
+
+{\bf About the analysis}: K-means clustering: specify number of clusters (or groups) in advance, then assign each review to one of the groups using the k-means algorithm.
+
+The k-means algorithm:
+\be
+	\+ randomly assign each review to a group
+	\+ iterate through the following until group assignments stop changing
+	\be
+		\+for each group, calculate the centroid (the vector of predictor means for the observations in each group)
+		\+assign each observation to the cluster whose centroid is closest
+	\ee
+	\+ Repeat steps 1 and 2 multiple times from different random assignments and select best ``solution'' (groups with smallest within-cluster variation).
+\ee
+
+\end{frame}
+
+
+\begin{frame}{Clustering of Amazon Reviews - cont'd}
+
+Example of k-means algorithm at work in 2D:
+
+\includegraphics[scale=0.35]{k-means_iterations}
+
+\end{frame}
+
+
+%--------------------------------
+\section{References}
+%--------------------------------
+\begin{frame}{References}
+
+\bi
+	\+ Feinerer, et al. (2008). "Text Mining Infrastructure in R." {\it Journal of Statistical Software}, Vol. 25, Issue 5, Mar 2008.
+	\+ Feinerer (2008). "An Introduction to Text Mining in R." {\it R News}, Volume 8/2, Oct 2008, 19-22.
+	\+ James, et al. {\it An Introduction to Statistical Learning with Applications in R}, Springer, 2013.
+	\+ Conway and White, {\it Machine Learning for Hackers}, O'Reilly, 2012.
+	\+ Miner, et al.  {\it Practical Text Mining}, Elsevier, 2012.
+\ei
+
+\end{frame}
+
+\end{document}
+
+
